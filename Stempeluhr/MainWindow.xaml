@@ -1,0 +1,143 @@
+﻿<Window x:Name="mwStempeluhr" x:Class="Stempeluhr.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Stempeluhr"
+        mc:Ignorable="d"
+        Title="Stempeluhr" Height="550" Width="800" WindowStartupLocation="CenterScreen">
+
+    <StackPanel>
+        <Menu HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <MenuItem Header="Menü" StaysOpenOnClick="True" BorderThickness="0,0,0,3" Background="#00000000" HorizontalAlignment="Right" ClipToBounds="True">
+                <MenuItem Header="Arbeitstage" Click="butArbeitstage_Click" />
+                <MenuItem x:Name="m_Fehltage" Header="Urlaub/Gleittage" Click="m_Fehltage_Click" />
+                <MenuItem Header="Zeiten nachtragen" Click="but_ZeitenUpt_Click"/>
+                <MenuItem Header="Saldo bearbeiten" Click="but_Saldo_Click" />
+                <Separator />
+                <MenuItem x:Name="m_MiniTimer" Header="Mini-Stempeluhr" IsCheckable="True" IsEnabled="false"/>
+            <Separator />
+                <MenuItem x:Name="m_LoadDB" Header="Sicherung öffnen/erstellen" Click="m_LoadDB_Click" />
+                <MenuItem x:Name="m_Updates" Header="Check for Updates" Click="m_Updates_Click"/>
+                <MenuItem x:Name="m_Info" Header="Info" Click="m_Info_Click"/>
+                <MenuItem Header="Stempeluhr schließen" Click="MenuItem_Click" />
+            </MenuItem>
+        </Menu>
+        <!--Anzeige des aktuellen Datums-->
+        <StackPanel Margin="5 0 5 0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBlock Name="tbHeute" Grid.Column="0" Margin="0 5 0 5" FontWeight="Bold" Height="30"/>
+                <TextBlock x:Name="tbFileName" Grid.Column="1" Margin="0 5 0 5" FontWeight="Bold" Height="30"/>
+            </Grid>
+
+        </StackPanel>
+
+        <StackPanel Margin="5 0 5 0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="tb_AktSaldo" Grid.Column="0" Margin="0 5 0 5" FontWeight="Bold" Height="30"/>
+                
+            </Grid>
+
+        </StackPanel>
+
+        <!-- Buttons -->
+        <StackPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Button Name="butKommen" Grid.Column="0" Margin="5 0 5 0" Content="Kommen" Height="40" VerticalAlignment="Top" Click="butKommen_Click" />
+                <Button Name="butPauseStart" Grid.Column="1" Margin="5 0 5 0" Content="Pause Start" Click="butPauseStart_Click" />
+                <Button Name="butPauseEnde" Grid.Column="2" Margin="5 0 5 0" Content="Pause Ende" Click="butPauseEnde_Click" />
+                <Button Name="butGehen" Grid.Column="3" Margin="5 0 5 0" Content="Gehen" Click="butGehen_Click" />
+
+            </Grid>
+        </StackPanel>
+
+        <!--Aktuelle Zeit anzeigen-->
+        <!--Zeit gekommen und die geplante End Zeit-->
+        <StackPanel Margin="5 5 0 2">
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"   />
+                    <ColumnDefinition Width="*"   />
+                    <ColumnDefinition Width="2*"   />
+
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0" Margin="0, 0, 10, 0" Name="tbKommen" Padding="2" IsReadOnly="True" Background="#eee" HorizontalAlignment="Stretch"/>
+
+                <StackPanel Grid.Column="1" Margin="0 0 10 0">
+                    <TextBlock Text="Gehen geplant"/>
+                    <TextBox Name="tbGehenPlan" Padding="2"  HorizontalAlignment="Stretch" IsReadOnly="True" Background="#eee" Height="35" />
+                </StackPanel>
+
+                <TextBox Grid.Column="2" Margin="5, 0, 5, 0" Name="tbTimer" Padding="2" IsReadOnly="True" Background="#eee" HorizontalAlignment="Stretch" FontSize="14" TextAlignment="Center"/>
+
+            </Grid>
+        </StackPanel>
+
+        <!--Übersicht über die Bereits geloggten Zeiten-->
+        <StackPanel Margin="5 5 0 2">
+            <TextBlock Text="Übersicht" FontWeight="Bold"/>
+            <TextBlock Text="Zeitraum auswählen:" Margin="5 0 0 0"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Margin="5 5">
+                    <TextBlock Text="Von"/>
+                    <DatePicker Name="dpVon" IsTodayHighlighted="True" Text="" FirstDayOfWeek="Monday"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Margin="5 5">
+                    <TextBlock Text="Bis"/>
+                    <DatePicker Name="dpBis" IsTodayHighlighted="True" Text="" FirstDayOfWeek="Monday"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Margin="5 5">
+                    <Button Name="butZeitenAnzeigen" Content="Anzeigen" Margin="0 20 0 0" Click="butZeitenAnzeigen_Click" Height="40"/>
+                </StackPanel>
+                <StackPanel Grid.Column="3" Margin="5 5">
+                    <Button Name="butZeitenReset" Content="Reset" Margin="0 20 0 0" Height="40" Click="butZeitenReset_Click"/>
+                </StackPanel>
+
+            </Grid>
+        </StackPanel>
+
+        <!--Tabelle zum Anzeigen der Daten-->
+        <StackPanel Margin="5 5 5 2">
+            <DataGrid Name="dgZeiten" AutoGenerateColumns="False" MaxWidth="600" MaxHeight="200" HorizontalAlignment="Left"  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Datum" Binding="{Binding Datum}" Width="SizeToCells"/>
+                    <DataGridTextColumn Header="Kommen" Binding="{Binding Kommen}" Width="60"/>
+                    <DataGridTextColumn Header="Pause Start" Binding="{Binding PauseStart}" Width="80"/>
+                    <DataGridTextColumn Header="Pause Ende" Binding="{Binding PauseEnde}" Width="80"/>
+                    <DataGridTextColumn Header="Gehen" Binding="{Binding Gehen}" Width="50"/>
+                    <DataGridTextColumn Header="Zeit SOLL" Binding="{Binding ZeitSOLL}" Width="60"/>
+                    <DataGridTextColumn Header="Dauer Pause" Binding="{Binding DiffPause}" Width="60"/>
+                    <DataGridTextColumn Header="Bew. Zeit" Binding="{Binding BewZeit}" Width="60"/>
+                    <DataGridTextColumn Header="Saldo" Binding="{Binding Saldo}" Width="100"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </StackPanel>
+    </StackPanel>
+</Window>

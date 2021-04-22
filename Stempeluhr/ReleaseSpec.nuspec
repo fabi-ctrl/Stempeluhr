@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>Stempeluhr</id>
+    <version>0.0.0</version>
+    <title>Stempeluhr</title>
+    <authors>Fabian Horak</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <projectUrl>http://project_url_here_or_delete_this_line/</projectUrl>
+    <iconUrl>http://icon_url_here_or_delete_this_line/</iconUrl>
+    <description>Stempeluhr by Fabian Horak</description>
+    <releaseNotes>Summary of changes made in this release of the package.</releaseNotes>
+    <copyright>2021</copyright>
+    <tags>Tag1 Tag2</tags>
+  </metadata>
+  
+  <files>
+    <file src="bin\Release\net5.0-windows\**" target="lib\net45"/>
+  </files>
+</package>

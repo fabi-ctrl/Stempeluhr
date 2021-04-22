@@ -1,0 +1,77 @@
+﻿<Window x:Class="Stempeluhr.ZeitenUpt"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Stempeluhr"
+        mc:Ignorable="d"
+        Title="Zeiten nachtragen" Height="350" Width="565" VerticalAlignment="Top" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="70"/>
+            <RowDefinition Height="60"/>
+            <RowDefinition Height="100"/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Column="0" Grid.Row="0">
+            <Label Content="Zeiten nachtragen für:" FontWeight="Bold"/>
+            <DatePicker x:Name="dp_Datum" Margin="2,0,10,0" IsTodayHighlighted="True" Text="Wähle ein Datum" FirstDayOfWeek="Monday" BorderThickness="0,0,0,0" Background="AliceBlue" OpacityMask="AliceBlue" SelectedDateChanged="dp_Datum_SelectedDateChanged"/>
+        </StackPanel>
+
+        <StackPanel Grid.Column="3" Grid.Row="0">
+            <Label Content="Aktueller gesamt Saldo:"/>
+            <TextBox x:Name="tb_GesamtSaldo" Margin="2,0,10,0" IsManipulationEnabled="False"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Grid.Column="0" >
+            <Label Content="Kommen:" FontWeight="Bold"/>
+            <TextBox x:Name="tb_Kommen" Text="" Margin="2,0,10,0" HorizontalAlignment="Stretch" AcceptsTab="True" AcceptsReturn="True" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Grid.Column="1" >
+            <Label Content="Pause Start:" FontWeight="Bold"/>
+            <TextBox x:Name="tb_PauseStart" Text="" Margin="2,0,10,0" HorizontalAlignment="Stretch" AcceptsTab="True" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Grid.Column="2" >
+            <Label Content="Pause Ende:" FontWeight="Bold"/>
+            <TextBox x:Name="tb_PauseEnde" Text="" Margin="2,0,10,0" HorizontalAlignment="Stretch" AcceptsTab="True" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Grid.Column="3" >
+            <Label Content="Gehen:" FontWeight="Bold"/>
+            <TextBox x:Name="tb_Gehen" Text="" Margin="2,0,10,0" HorizontalAlignment="Stretch" AcceptsTab="True" KeyDown="tb_Gehen_KeyDown" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Grid.Column="1" HorizontalAlignment="Left">
+            <Label Content="Pausen Dauer:" FontWeight="Bold"/>
+            <TextBox Grid.Column="1" x:Name="tb_PauseDiff" Margin="2,0,10,0" HorizontalAlignment="Stretch" AcceptsTab="True" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Grid.Column="2">
+            <Label Content="Bew. Zeit:"/>
+            <TextBox Grid.Column="1" x:Name="tb_BewZeit" Text="" Margin="2,0,10,0" HorizontalAlignment="Stretch" AcceptsTab="True" IsEnabled="False" />
+            <Label Content="Saldo:" />
+            <TextBox Grid.Column="1" x:Name="tb_Saldo" Text="" Margin="2,0,10,0" HorizontalAlignment="Stretch" AcceptsTab="True" IsEnabled="False"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Grid.Column="3" Background="DarkGray">
+            <Label Content="SOLL Zeit:"/>
+            <TextBox Grid.Column="1" x:Name="tb_ZeitSOLL" Text="" Margin="2,0,10,0" HorizontalAlignment="Stretch" AcceptsTab="True" IsEnabled="False" />
+            <Label Content="SOLL Pause:"/>
+            <TextBox Grid.Column="1" x:Name="tb_PauseSOLL" Text="Dauer in Min." Margin="2,0,10,0" HorizontalAlignment="Stretch" AcceptsTab="True" IsEnabled="False"/>
+        </StackPanel>
+
+        <Button Margin="20,10,20,10" Grid.Column="2" Grid.Row="3" x:Name="butSave" RenderTransformOrigin="0.5,1.237" Content="Speichern" IsEnabled="False" Click="butSave_Click"/>
+        <Button Margin="20,10,20,10" Grid.Column="3" Grid.Row="3" x:Name="butReset" RenderTransformOrigin="0.5,1.237" Content="Reset" Click="butReset_Click"/>
+        
+    </Grid>
+</Window>
