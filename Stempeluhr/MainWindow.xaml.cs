@@ -342,14 +342,11 @@ namespace Stempeluhr
         }
 
         private async void m_Updates_Click(object sender, RoutedEventArgs e)
-        {   
+        {
             try
             {
                 var updateInfo = await manager.CheckForUpdate();
-
-            
-
-
+                
                 if (updateInfo.ReleasesToApply.Count > 0)
                 {
                     await manager.UpdateApp();
@@ -363,13 +360,21 @@ namespace Stempeluhr
             }
             catch(Exception ex)
             {
-                MessageBox.Show(ex.Message.ToString());
+                MessageBox.Show("Ups... es ist ein Fehler aufgetreten. " + ex.Message.ToString());
             }
         }
 
         private void m_Info_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Aktuelle Version: " + manager.CurrentlyInstalledVersion().ToString());
+            try
+            {
+                MessageBox.Show("Aktuelle Version: " + manager.CurrentlyInstalledVersion().ToString());
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show("Ups... es ist ein Fehler aufgetreten. " + ex.Message.ToString());
+            }
+            
         }
 
         private void m_LoadDB_Click(object sender, RoutedEventArgs e)
