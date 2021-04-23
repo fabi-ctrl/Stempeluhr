@@ -33,7 +33,7 @@ namespace Stempeluhr
                 InitializeComponent();
                 this.Show();
 
-                mwStempeluhr.Title = "Stempeluhr - " + DateTime.Now.ToString("D");
+                //mwStempeluhr.Title = "Stempeluhr - " + DateTime.Now.ToString("D");
 
                 tbTimer.Text = startTimeDisplay;
 
@@ -80,7 +80,7 @@ namespace Stempeluhr
                 manager = await UpdateManager
                     .GitHubUpdateManager(@"https://github.com/fabi-ctrl/Stempeluhr");
 
-                this.Title += " (v" + manager.CurrentlyInstalledVersion().ToString() + " - BETA)";
+                this.Title = "Stempeluhr - " + DateTime.Now.ToString("D") + " (v" + manager.CurrentlyInstalledVersion().ToString() + " - BETA)";
             }
             catch(Exception ex)
             {
