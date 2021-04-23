@@ -31,9 +31,8 @@ namespace Stempeluhr
             try
             {
                 InitializeComponent();
-                this.Show();
-
-                //mwStempeluhr.Title = "Stempeluhr - " + DateTime.Now.ToString("D");
+                
+                Loaded += MainWindow_Loaded;
 
                 tbTimer.Text = startTimeDisplay;
 
@@ -42,16 +41,13 @@ namespace Stempeluhr
 
                 timer.Elapsed += OnTimerElapse;
 
-
                 butPauseStart.IsEnabled = false;
                 butPauseEnde.IsEnabled = false;
                 butGehen.IsEnabled = false;
 
                 zeiten = new List<Zeiten>();
 
-
                 tbHeute.Text = DateTime.Now.ToString("D");
-
 
                 LoadConfig();
 
@@ -61,11 +57,6 @@ namespace Stempeluhr
                 }
 
                 ReadDatabase();
-
-                #if !DEBUG
-                Loaded += MainWindow_Loaded;
-                #endif
-
             }
             catch (Exception ex)
             {
@@ -77,14 +68,14 @@ namespace Stempeluhr
         {
             try
             {
-                manager = await UpdateManager
-                    .GitHubUpdateManager(@"https://github.com/fabi-ctrl/Stempeluhr");
+                manager = await UpdateManager.GitHubUpdateManager(@"https://github.com/fabi-ctrl/Stempeluhr");
 
                 this.Title = "Stempeluhr - " + DateTime.Now.ToString("D") + " (v" + manager.CurrentlyInstalledVersion().ToString() + " - BETA)";
             }
             catch(Exception ex)
             {
                 MessageBox.Show("Ups... etwas ist schief gelaufen. " + ex.Message.ToString());
+                this.Title = "Stempeluhr - " + DateTime.Now.ToString("D");
             }
         }
 
@@ -364,7 +355,7 @@ namespace Stempeluhr
             }
         }
 
-        private void m_Info_Click(object sender, RoutedEventArgs e)
+        private async void m_Info_Click(object sender, RoutedEventArgs e)
         {
             try
             {
