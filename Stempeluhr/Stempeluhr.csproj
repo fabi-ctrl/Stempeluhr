@@ -30,7 +30,7 @@
 		<NugetTools>$(PkgNuGet_CommandLine)\tools</NugetTools>
 		<SquirrelTools>$(Pkgsquirrel_windows)\tools</SquirrelTools>
 
-		<Version>0.0.4</Version>
+		<Version>0.0.5</Version>
 
 		<NuspecFile>$(SolutionDir)Stempeluhr\ReleaseSpec.nuspec</NuspecFile>
 	</PropertyGroup>

@@ -101,7 +101,7 @@ namespace Stempeluhr
         }
 
         
-        private void OnTimerElapse(object sender, ElapsedEventArgs e)
+        private async void OnTimerElapse(object sender, ElapsedEventArgs e)
         {
             Application.Current.Dispatcher.Invoke(() => tbTimer.Text = stopwatch.Elapsed.ToString(format:@"hh\:mm\:ss"));
         }
@@ -384,92 +384,98 @@ namespace Stempeluhr
         private void ZeitBerechnen()
         {
             double DiffPause, maxPause, tmpZeit, bewzeit, saldo, tmpSaldo;
-
-            using (SQLiteConnection connection = new SQLiteConnection(App.databasePath))
+            try
             {
-                connection.CreateTable<Zeiten>();
-                connection.CreateTable<Arbeitstage>();
+                using (SQLiteConnection connection = new SQLiteConnection(App.databasePath))
+                {
+                    connection.CreateTable<Zeiten>();
+                    connection.CreateTable<Arbeitstage>();
 
-                //prüfen ob der heutige Tag ein Arbeitstag ist
-                query = "SELECT Checked FROM Arbeitstage WHERE Arbeitstag = '" + tag + "'";
-                if (connection.FindWithQuery<Arbeitstage>(query, "?")?.Checked == "x")
-                {
-                    //wenn JA, dann die Max Pause aus DB lesen
-                    query = "SELECT Pause FROM Arbeitstage WHERE Arbeitstag = '" + tag + "'";
-                    maxPause = connection.FindWithQuery<Arbeitstage>(query, "?").Pause;
-                }
-                else //wenn NEIN, dann Stunden und Max Pause auf Null setzen
-                {
-                    maxPause = 0;
-                }
+                    //prüfen ob der heutige Tag ein Arbeitstag ist
+                    query = "SELECT Checked FROM Arbeitstage WHERE Arbeitstag = '" + tag + "'";
+                    if (connection.FindWithQuery<Arbeitstage>(query, "?")?.Checked == "x")
+                    {
+                        //wenn JA, dann die Max Pause aus DB lesen
+                        query = "SELECT Pause FROM Arbeitstage WHERE Arbeitstag = '" + tag + "'";
+                        maxPause = connection.FindWithQuery<Arbeitstage>(query, "?").Pause;
+                    }
+                    else //wenn NEIN, dann Stunden und Max Pause auf Null setzen
+                    {
+                        maxPause = 0;
+                    }
 
-                //Berechnung der Pausen-Dauer
-                query = "UPDATE Zeiten SET DiffPause = round(((strftime('%s', PauseEnde) - strftime('%s', PauseStart))) / 3600.0, 2) WHERE Datum = '" + today + "'";
-                connection.Query<Zeiten>(query, "?");
-                query = "SELECT DiffPause FROM Zeiten where Datum = '" + today + "'";
-                DiffPause = connection.FindWithQuery<Zeiten>(query, "?").DiffPause;
-                
-                //Prüfen ob die max. Pausen-Dauer für diesen Tag überschritten wurde
-                if (DiffPause > maxPause)
-                {
-                    //wenn JA, dann wird die tatsächliche Pausen-Dauer von der Gesamtzeit abgezogen
-                    query = "UPDATE Zeiten SET BewZeit = (round(((strftime('%s', Gehen) - strftime('%s', Kommen))) / 3600.0, 2) - DiffPause) WHERE Datum = '" + today + "'";
-                }
-                else 
-                {
-                    //wenn Nein, dann wird die "MUSS"-Pause von der Gesamtzeit abgezogen
-                    //Dazu wird temprör die BewZeit in der DB zwischen Gehen und Kommen berechnet
-                    query = "UPDATE Zeiten SET BewZeit = round(((strftime('%s', Gehen) - strftime('%s', Kommen))) / 3600.0, 2) WHERE Datum = '" + today + "'";
+                    //Berechnung der Pausen-Dauer
+                    query = "UPDATE Zeiten SET DiffPause = round(((strftime('%s', PauseEnde) - strftime('%s', PauseStart))) / 3600.0, 2) WHERE Datum = '" + today + "'";
                     connection.Query<Zeiten>(query, "?");
+                    query = "SELECT DiffPause FROM Zeiten where Datum = '" + today + "'";
+                    DiffPause = connection.FindWithQuery<Zeiten>(query, "?").DiffPause;
+
+                    //Prüfen ob die max. Pausen-Dauer für diesen Tag überschritten wurde
+                    if (DiffPause > maxPause)
+                    {
+                        //wenn JA, dann wird die tatsächliche Pausen-Dauer von der Gesamtzeit abgezogen
+                        query = "UPDATE Zeiten SET BewZeit = (round(((strftime('%s', Gehen) - strftime('%s', Kommen))) / 3600.0, 2) - DiffPause) WHERE Datum = '" + today + "'";
+                    }
+                    else
+                    {
+                        //wenn Nein, dann wird die "MUSS"-Pause von der Gesamtzeit abgezogen
+                        //Dazu wird temprör die BewZeit in der DB zwischen Gehen und Kommen berechnet
+                        query = "UPDATE Zeiten SET BewZeit = round(((strftime('%s', Gehen) - strftime('%s', Kommen))) / 3600.0, 2) WHERE Datum = '" + today + "'";
+                        connection.Query<Zeiten>(query, "?");
+                        query = "SELECT BewZeit FROM Zeiten WHERE Datum = '" + today + "'";
+                        tmpZeit = connection.FindWithQuery<Zeiten>(query, "?").BewZeit;
+
+                        //Von der gestempleten Zeit wird die "MUSS"-Pause abgezogen...
+                        tmpZeit = tmpZeit - maxPause;
+                        //... und endgültig in die DB als bewertete Zeit geschrieben
+                        query = "UPDATE Zeiten SET BewZeit = (round(((strftime('%s', Gehen) - strftime('%s', Kommen))) / 3600.0, 2) - " + tmpZeit + ") WHERE Datum = '" + today + "'";
+                    }
+
+                    //Die Updates werden auf die DB geschrieben
+                    connection.Query<Zeiten>(query, "?");
+
+                    //Saldo berechnen
+                    query = "UPDATE Zeiten SET Saldo = BewZeit - ZeitSOLL WHERE Datum = '" + today + "'";
+                    connection.Query<Zeiten>(query, "?");
+
+                    //Saldo addieren
+                    query = "SELECT Saldo FROM Zeiten WHERE Datum = '" + today + "'";
+                    saldo = connection.FindWithQuery<Zeiten>(query, "?").Saldo;
+
+                    connection.CreateTable<Saldo>();
+
+                    if (connection.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?")?.saldo != null)
+                    {
+                        tmpSaldo = connection.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?").saldo;
+                    }
+                    else
+                    {
+                        tmpSaldo = 0;
+                    }
+
+                    Saldo c_saldo = new Saldo
+                    {
+                        TimeStmp = DateTime.Now.ToString(),
+                        saldo = tmpSaldo + saldo,
+                    };
+
+                    connection.Insert(c_saldo);
+
+                    ReadDatabase();
+
+                    //Die bewertete Zeit wird ausgegeben
                     query = "SELECT BewZeit FROM Zeiten WHERE Datum = '" + today + "'";
-                    tmpZeit = connection.FindWithQuery<Zeiten>(query, "?").BewZeit;
-                    
-                    //Von der gestempleten Zeit wird die "MUSS"-Pause abgezogen...
-                    tmpZeit = tmpZeit - maxPause;
-                    //... und endgültig in die DB als bewertete Zeit geschrieben
-                    query = "UPDATE Zeiten SET BewZeit = (round(((strftime('%s', Gehen) - strftime('%s', Kommen))) / 3600.0, 2) - " + tmpZeit + ") WHERE Datum = '" + today + "'";
+                    bewzeit = connection.FindWithQuery<Zeiten>(query, "?").BewZeit;
+                    query = "SELECT Saldo from Zeiten WHERE Datum = '" + today + "'";
+                    saldo = connection.FindWithQuery<Zeiten>(query, "?").Saldo;
+                    tbTimer.Text = "Bew. Zeit: " + String.Format("{0:0.00}", bewzeit) + " | Saldo heute: '" + String.Format("{0:0.00}", saldo) + "'";
+                    saldo = connection.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?").saldo;
+                    tb_AktSaldo.Text = "Aktueller Saldo: " + String.Format("{0:0.00}", saldo);
                 }
-
-                //Die Updates werden auf die DB geschrieben
-                connection.Query<Zeiten>(query, "?");
-
-                //Saldo berechnen
-                query = "UPDATE Zeiten SET Saldo = BewZeit - ZeitSOLL WHERE Datum = '" + today + "'";
-                connection.Query<Zeiten>(query, "?");
-
-                //Saldo addieren
-                query = "SELECT Saldo FROM Zeiten WHERE Datum = '" + today + "'";
-                saldo = connection.FindWithQuery<Zeiten>(query, "?").Saldo;
-
-                connection.CreateTable<Saldo>();
-                
-                if (connection.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?")?.saldo != null)
-                {
-                    tmpSaldo = connection.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?").saldo;
-                }
-                else
-                {
-                    tmpSaldo = 0;
-                }
-
-                Saldo c_saldo = new Saldo
-                {
-                    TimeStmp = DateTime.Now.ToString(),
-                    saldo = tmpSaldo + saldo,
-                };
-
-                connection.Insert(c_saldo);
-
-                ReadDatabase();
-                
-                //Die bewertete Zeit wird ausgegeben
-                query = "SELECT BewZeit FROM Zeiten WHERE Datum = '" + today + "'";
-                bewzeit = connection.FindWithQuery<Zeiten>(query, "?").BewZeit;
-                query = "SELECT Saldo from Zeiten WHERE Datum = '" + today + "'";
-                saldo = connection.FindWithQuery<Zeiten>(query, "?").Saldo;
-                tbTimer.Text = "Bew. Zeit: " + String.Format("{0:0.00}", bewzeit) + " | Saldo heute: '" + String.Format("{0:0.00}", saldo) + "'";
-                saldo = connection.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?").saldo;
-                tb_AktSaldo.Text = "Aktueller Saldo: " + String.Format("{0:0.00}", saldo);
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show("Ups... es ist ein Fehler aufgetreten. " + ex.Message.ToString());
             }
         }
 
