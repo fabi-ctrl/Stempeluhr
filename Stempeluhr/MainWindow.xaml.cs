@@ -5,9 +5,9 @@ using System.Linq;
 using System.Windows;
 using System.Diagnostics;
 using System.Timers;
-using Microsoft.Win32;
-using System.IO;
 using System.Configuration;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Squirrel;
 
 namespace Stempeluhr
@@ -15,12 +15,13 @@ namespace Stempeluhr
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : INotifyPropertyChanged
     {
         List<Zeiten> zeiten;
-        string query, strDateVon, strDateBis, _filename;
+        string query, strDateVon, strDateBis, _filename, DEBUG;
         static string today = DateTime.Now.ToString("yyyy-MM-dd");
         static string tag = DateTime.Now.ToString("dddd");
+        double saldo;
         private Stopwatch stopwatch;
         private Timer timer;
         const string startTimeDisplay = "00:00:00";
@@ -30,6 +31,7 @@ namespace Stempeluhr
         {
             try
             {
+                DataContext = this;
                 InitializeComponent();
                 
                 Loaded += MainWindow_Loaded;
@@ -64,6 +66,26 @@ namespace Stempeluhr
             }
         }
 
+        private string _saldo;
+        public string Saldo
+        {
+            get { return _saldo; }
+            set
+            {
+                if (_saldo != value)
+                {
+                    _saldo = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        private void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             try
@@ -79,7 +101,6 @@ namespace Stempeluhr
             }
         }
 
-
         private void LoadConfig()
         {
             try
@@ -93,6 +114,13 @@ namespace Stempeluhr
                 {
                     App.databasePath = ConfigurationManager.AppSettings.Get("DBPath");
                 }
+
+                using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
+                {
+                    saldo = conn.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?").saldo;
+                    Saldo = String.Format("{0:0.00}", saldo);
+                }
+
             }
             catch(Exception ex)
             {
@@ -368,6 +396,12 @@ namespace Stempeluhr
             
         }
 
+        private void tbFileName_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            string path = System.IO.Path.GetDirectoryName(App.databasePath);
+            Process.Start("explorer", path);
+        }
+
         private void m_LoadDB_Click(object sender, RoutedEventArgs e)
         {
             LoadDB loadDB = new LoadDB();
@@ -383,7 +417,7 @@ namespace Stempeluhr
 
         private void ZeitBerechnen()
         {
-            double DiffPause, maxPause, tmpZeit, bewzeit, saldo, tmpSaldo;
+            double DiffPause, maxPause, tmpZeit, bewzeit, tmpSaldo;
             try
             {
                 using (SQLiteConnection connection = new SQLiteConnection(App.databasePath))
@@ -470,7 +504,7 @@ namespace Stempeluhr
                     saldo = connection.FindWithQuery<Zeiten>(query, "?").Saldo;
                     tbTimer.Text = "Bew. Zeit: " + String.Format("{0:0.00}", bewzeit) + " | Saldo heute: '" + String.Format("{0:0.00}", saldo) + "'";
                     saldo = connection.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?").saldo;
-                    tb_AktSaldo.Text = "Aktueller Saldo: " + String.Format("{0:0.00}", saldo);
+                    Saldo = String.Format("{0:0.00}", saldo);
                 }
             }
             catch(Exception ex)

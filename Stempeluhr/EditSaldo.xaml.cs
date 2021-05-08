@@ -62,7 +62,6 @@ namespace Stempeluhr
             }
 
             MessageBox.Show("Saldo gesichert!");
-
         }
     }
 }

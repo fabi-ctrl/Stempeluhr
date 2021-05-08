@@ -32,22 +32,20 @@
                 </Grid.ColumnDefinitions>
                 
                 <TextBlock Name="tbHeute" Grid.Column="0" Margin="0 5 0 5" FontWeight="Bold" Height="30"/>
-                <TextBlock x:Name="tbFileName" Grid.Column="1" Margin="0 5 0 5" FontWeight="Bold" Height="30"/>
+                <TextBlock x:Name="tbFileName" Grid.Column="1" Margin="0 5 0 5" FontWeight="Bold" Height="30" AutomationProperties.HelpText="Klicke um DB im Explorer zu öffnen" MouseLeftButtonUp="tbFileName_MouseLeftButtonUp" Cursor="Hand" ToolTip="Klicke, um deine DB im Explorer zu öffnen"/>
             </Grid>
 
         </StackPanel>
 
-        <StackPanel Margin="5 0 5 0">
+        <StackPanel Margin="300 0 300 10" Background="#FF67BFF1" UseLayoutRounding="False" >
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock x:Name="tb_AktSaldo" Grid.Column="0" Margin="0 5 0 5" FontWeight="Bold" Height="30"/>
-                
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Label Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0 0 0 5" FontSize="18" Foreground="#FFFBF9F9" FontWeight="Bold" >Saldo</Label>
+                <TextBlock x:Name="tb_AktSaldo" Text="{Binding Path=Saldo}" Grid.Row="0" Margin="0 5 0 0" FontSize="20" FontWeight="Bold" Height="30" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#FFFDFDFD"/>
             </Grid>
-
         </StackPanel>
 
         <!-- Buttons -->
