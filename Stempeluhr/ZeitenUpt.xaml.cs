@@ -190,7 +190,9 @@ namespace Stempeluhr
                 tb_PauseEnde.Text = "00:00";
                 noPauseTimeSpan = true;
             }
-             
+
+            //Stempeluhr.calcZeiten.Calculate(tb_Kommen.Text, tb_Gehen.Text, tb_PauseStart.Text, tb_PauseEnde.Text, tb_PauseDiff.Text, noPauseTimeSpan);
+
             pauseStart = DateTime.Parse(tb_PauseStart.Text, cultureInfo);
             pauseEnde = DateTime.Parse(tb_PauseEnde.Text, cultureInfo);
             

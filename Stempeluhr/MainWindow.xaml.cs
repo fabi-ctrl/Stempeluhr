@@ -115,16 +115,21 @@ namespace Stempeluhr
                     App.databasePath = ConfigurationManager.AppSettings.Get("DBPath");
                 }
 
-                using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
-                {
-                    saldo = conn.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?").saldo;
-                    Saldo = String.Format("{0:0.00}", saldo);
-                }
+                ReturnSaldo();
 
             }
             catch(Exception ex)
             {
                 MessageBox.Show(ex.Message.ToString(), "Ups... etwas ist schief gelaufen", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async void ReturnSaldo()
+        {
+            using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
+            {
+                saldo = conn.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?").saldo;
+                Saldo = String.Format("{0:0.00}", saldo);
             }
         }
 
@@ -146,6 +151,14 @@ namespace Stempeluhr
             
             string Jetzt = DateTime.Now.ToString("HH:mm"), Gehen;
             double ZeitSOLL;
+
+            if (stopwatch.IsRunning)
+            {
+                stopwatch.Stop();
+                timer.Stop();
+                stopwatch.Reset();
+                tbTimer.Text = startTimeDisplay;
+            }
 
             stopwatch.Start();
             timer.Start();
@@ -266,7 +279,8 @@ namespace Stempeluhr
         {
             stopwatch.Stop();
             timer.Stop();
-            
+            stopwatch.Reset();
+
             UpdateTable("Gehen");
             ZeitBerechnen();
 
@@ -287,12 +301,15 @@ namespace Stempeluhr
         {
             EditSaldo winEditSaldo = new EditSaldo();
             winEditSaldo.ShowDialog();
+            ReturnSaldo();
         }
 
         private void but_ZeitenUpt_Click(object sender, RoutedEventArgs e)
         {
             ZeitenUpt winZeitenUpt = new ZeitenUpt();
             winZeitenUpt.ShowDialog();
+            ReturnSaldo();
+            ReadDatabase();
         }
 
         private void butZeitenReset_Click(object sender, RoutedEventArgs e)
@@ -406,7 +423,7 @@ namespace Stempeluhr
         {
             LoadDB loadDB = new LoadDB();
             loadDB.ShowDialog();
-            tbFileName.Text = ConfigurationManager.AppSettings.Get("DBPath");
+            tbFileName.Text = "Dein DB File: " + System.IO.Path.GetFileName(ConfigurationManager.AppSettings.Get("DBPath"));
         }
 
         private void m_Fehltage_Click(object sender, RoutedEventArgs e)
@@ -418,8 +435,9 @@ namespace Stempeluhr
         private void ZeitBerechnen()
         {
             double DiffPause, maxPause, tmpZeit, bewzeit, tmpSaldo;
-            try
-            {
+            string _DiffPause, _tmpZeit;
+            //try
+            //{
                 using (SQLiteConnection connection = new SQLiteConnection(App.databasePath))
                 {
                     connection.CreateTable<Zeiten>();
@@ -448,7 +466,8 @@ namespace Stempeluhr
                     if (DiffPause > maxPause)
                     {
                         //wenn JA, dann wird die tatsächliche Pausen-Dauer von der Gesamtzeit abgezogen
-                        query = "UPDATE Zeiten SET BewZeit = (round(((strftime('%s', Gehen) - strftime('%s', Kommen))) / 3600.0, 2) - DiffPause) WHERE Datum = '" + today + "'";
+                        _DiffPause = String.Format("{0:0.00}", DiffPause);
+                        query = "UPDATE Zeiten SET BewZeit = round(((strftime('%s', Gehen) - strftime('%s', Kommen))) / 3600.0, 2) - " + _DiffPause + " WHERE Datum = '" + today + "'";
                     }
                     else
                     {
@@ -461,8 +480,9 @@ namespace Stempeluhr
 
                         //Von der gestempleten Zeit wird die "MUSS"-Pause abgezogen...
                         tmpZeit = tmpZeit - maxPause;
+                        _tmpZeit = String.Format("{0:0.00}", tmpZeit);
                         //... und endgültig in die DB als bewertete Zeit geschrieben
-                        query = "UPDATE Zeiten SET BewZeit = (round(((strftime('%s', Gehen) - strftime('%s', Kommen))) / 3600.0, 2) - " + tmpZeit + ") WHERE Datum = '" + today + "'";
+                        query = "UPDATE Zeiten SET BewZeit = round(((strftime('%s', Gehen) - strftime('%s', Kommen))) / 3600.0, 2) - " + _tmpZeit + " WHERE Datum = '" + today + "'";
                     }
 
                     //Die Updates werden auf die DB geschrieben
@@ -506,11 +526,11 @@ namespace Stempeluhr
                     saldo = connection.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?").saldo;
                     Saldo = String.Format("{0:0.00}", saldo);
                 }
-            }
-            catch(Exception ex)
-            {
-                MessageBox.Show("Ups... es ist ein Fehler aufgetreten. " + ex.Message.ToString());
-            }
+            //}
+            //catch(Exception ex)
+            //{
+            //    MessageBox.Show("Ups... es ist ein Fehler aufgetreten. " + ex.Message.ToString());
+            //}
         }
 
 #endregion

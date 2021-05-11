@@ -40,6 +40,7 @@ namespace Stempeluhr
             _config.Save(ConfigurationSaveMode.Modified);
 
             MessageBox.Show("Deine Zeiten DB liegt hier: " + ConfigurationManager.AppSettings.Get("DBPath"));
+            this.Close();
                 
         }
 
@@ -62,6 +63,7 @@ namespace Stempeluhr
              _config.Save(ConfigurationSaveMode.Modified);
 
             MessageBox.Show("Deine Zeiten DB wurde geladen");
+            this.Close();
         }
     }
 }
