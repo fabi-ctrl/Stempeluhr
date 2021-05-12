@@ -4,8 +4,11 @@ using System.Globalization;
 
 namespace Stempeluhr
 {
-    public static class calcZeiten
+    class calcZeiten
     {
+
+        public string saldo { get; set; }
+        
         /*
         public static void Calculate(string Kommen, string Gehen, string PauseStart, string PauseEnde, string PauseDiff, bool noPauseTimeSpan)
         {
