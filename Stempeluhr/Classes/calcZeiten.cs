@@ -6,6 +6,7 @@ namespace Stempeluhr
 {
     public static class calcZeiten
     {
+        /*
         public static void Calculate(string Kommen, string Gehen, string PauseStart, string PauseEnde, string PauseDiff, bool noPauseTimeSpan)
         {
             string query, today;
@@ -20,7 +21,7 @@ namespace Stempeluhr
             pauseStart = new DateTime();
             pauseEnde = new DateTime();
             gehen = new DateTime();
-
+            
 
             pauseStart = DateTime.Parse(PauseStart, cultureInfo);
             pauseEnde = DateTime.Parse(PauseEnde, cultureInfo);
@@ -88,6 +89,8 @@ namespace Stempeluhr
             saldo = bewZeit - ZeitSOLL;
 
             tb_Saldo.Text = String.Format("{0:0.00}", saldo);
-        }
+        }*/
+            
     }
+
 }

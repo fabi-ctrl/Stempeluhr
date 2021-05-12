@@ -150,7 +150,7 @@ namespace Stempeluhr
             //initial alles unten muss nur ausfeührt werden, wenn das erstmal auf Kommen geklickt wird
             
             string Jetzt = DateTime.Now.ToString("HH:mm"), Gehen;
-            double ZeitSOLL;
+            double ZeitSOLL, PauseSOLL;
 
             if (stopwatch.IsRunning)
             {
@@ -175,14 +175,18 @@ namespace Stempeluhr
                 {
                     query = "SELECT Stunden FROM Arbeitstage WHERE Arbeitstag = '" + tag + "'";
                     ZeitSOLL = connection.FindWithQuery<Arbeitstage>(query, "?").Stunden;
+                    query = "SELECT Pause FROM Arbeitstage WHERE Arbeitstag = '" + tag + "'";
+                    PauseSOLL = connection.FindWithQuery<Arbeitstage>(query, "?").Pause;
                 }
                 else
                 {
                     ZeitSOLL = 0;
+                    PauseSOLL = 0;
                 }
             }
 
             //Uhrzeit für Mindesarbeitszeit anzeigen
+            ZeitSOLL += PauseSOLL;
             DateTime HoursGehen = DateTime.Now.AddHours(ZeitSOLL);
             if (ZeitSOLL > 0)
             { 
