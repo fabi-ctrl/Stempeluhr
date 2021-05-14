@@ -436,12 +436,63 @@ namespace Stempeluhr
             winFehltage.ShowDialog();
         }
 
+
         private void ZeitBerechnen()
+        {
+            //try
+            //{
+                //string today = DateTime.Now.ToString("yyyy-MM-dd");
+                string Kommen, Gehen, PauseStart, PauseEnde;
+                DateTime Datum = DateTime.Now;
+                double bewzeit;
+
+                using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
+                {
+                    conn.CreateTable<Zeiten>();
+                    query = "SELECT * FROM Zeiten WHERE Datum = '" + today + "'";
+                    Kommen = conn.FindWithQuery<Zeiten>(query, "?").Kommen;
+                    Gehen = conn.FindWithQuery<Zeiten>(query, "?").Gehen;
+
+                    if (conn.FindWithQuery<Zeiten>(query, "?")?.PauseStart == null && conn.FindWithQuery<Zeiten>(query, "?")?.PauseEnde == null)
+                    {
+                        PauseStart = "";
+                        PauseEnde = "";
+                    }
+                    else
+                    {
+                        PauseStart = conn.FindWithQuery<Zeiten>(query, "?")?.PauseStart;
+                        PauseEnde = conn.FindWithQuery<Zeiten>(query, "?")?.PauseEnde;
+                    }
+                }
+
+                Stempeluhr.calcZeiten.Calculate(Datum, Kommen, Gehen, PauseStart, PauseEnde, "", false);
+
+                ReadDatabase();
+
+                using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
+                {
+                    conn.CreateTables<Zeiten, Saldo>();
+                    query = "SELECT * FROM Zeiten WHERE Datum = '" + today + "'";
+                    bewzeit = conn.FindWithQuery<Zeiten>(query, "?").BewZeit;
+                    saldo = conn.FindWithQuery<Zeiten>(query, "?").Saldo;
+                    saldo = conn.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?").saldo;
+                }
+
+                tbTimer.Text = "Bew. Zeit: " + String.Format("{0:0.00}", bewzeit) + " | Saldo heute: '" + String.Format("{0:0.00}", saldo) + "'";
+                Saldo = String.Format("{0:0.00}", saldo);
+            //}
+            //catch (Exception ex)
+            //{
+            //    MessageBox.Show("Ups... etwas ist schief gelaufen: '" + ex.Message.ToString() + "'", "Fehler beim Berechnen");
+            //}
+        }
+
+        /*private void ZeitBerechnen()
         {
             double DiffPause, maxPause, tmpZeit, bewzeit, tmpSaldo;
             string _DiffPause, _tmpZeit;
-            //try
-            //{
+            try
+            {
                 using (SQLiteConnection connection = new SQLiteConnection(App.databasePath))
                 {
                     connection.CreateTable<Zeiten>();
@@ -530,12 +581,12 @@ namespace Stempeluhr
                     saldo = connection.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?").saldo;
                     Saldo = String.Format("{0:0.00}", saldo);
                 }
-            //}
-            //catch(Exception ex)
-            //{
-            //    MessageBox.Show("Ups... es ist ein Fehler aufgetreten. " + ex.Message.ToString());
-            //}
-        }
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show("Ups... es ist ein Fehler aufgetreten. " + ex.Message.ToString());
+            }
+        }*/
 
 #endregion
     }

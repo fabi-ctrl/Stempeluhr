@@ -1,23 +1,24 @@
 ﻿using SQLite;
 using System;
 using System.Globalization;
+using System.Windows;
 
 namespace Stempeluhr
 {
     class calcZeiten
     {
-
-        public string saldo { get; set; }
-        
-        /*
-        public static void Calculate(string Kommen, string Gehen, string PauseStart, string PauseEnde, string PauseDiff, bool noPauseTimeSpan)
-        {
+        public static void Calculate(DateTime Datum, string Kommen, string Gehen, string PauseStart, string PauseEnde, string PauseDiff, bool noPauseTimeSpan)
+        {   
             string query, today;
-            double pauseSOLL, saldo, stunden, ZeitSOLL;
+            double pauseSOLL, saldo, ZeitSOLL, tmpSaldo, Pause;
             CultureInfo cultureInfo;
             DateTime kommen, pauseStart, pauseEnde, gehen;
-            double Pause;
-
+            
+            bool update = false, insert = false;
+            
+            string tag = Datum.DayOfWeek.ToString();
+            string datum = Datum.Date.ToString("yyyy-MM-dd");
+            
             today = DateTime.Now.ToString("dddd");
             cultureInfo = new CultureInfo("de-DE");
             kommen = new DateTime();
@@ -26,12 +27,35 @@ namespace Stempeluhr
             gehen = new DateTime();
             
 
-            pauseStart = DateTime.Parse(PauseStart, cultureInfo);
-            pauseEnde = DateTime.Parse(PauseEnde, cultureInfo);
+            if (PauseStart != "" && PauseEnde != "")
+            {
+                pauseStart = DateTime.Parse(PauseStart, cultureInfo);
+                pauseEnde = DateTime.Parse(PauseEnde, cultureInfo);
+            }            
 
             double kommenHours = gehen.Hour - kommen.Hour;
             double kommenMinutes = gehen.Minute - kommen.Minute;
 
+            using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
+            {
+                conn.CreateTable<Arbeitstage>();
+                //prüfen ob der heutige Tag ein Arbeitstag ist
+                query = "SELECT Checked FROM Arbeitstage WHERE Arbeitstag = '" + tag + "'";
+                if (conn.FindWithQuery<Arbeitstage>(query, "?")?.Checked == "x")
+                {
+                    //wenn JA, dann die Max Pause aus DB lesen
+                    query = "SELECT * FROM Arbeitstage WHERE Arbeitstag = '" + tag + "'";
+                    pauseSOLL = conn.FindWithQuery<Arbeitstage>(query, "?").Pause;
+                    ZeitSOLL = conn.FindWithQuery<Arbeitstage>(query, "?").Stunden;
+                }
+                else //wenn NEIN, dann ZeitSOLL und PauseSOLL auf Null setzen
+                {
+                    pauseSOLL = 0;
+                    ZeitSOLL = 0;
+                }
+            }
+
+            //beim Aufruf aus MaindWindow Gehen, immer false
             if (noPauseTimeSpan == false)
             {
                 double pauseHours = pauseEnde.Hour - pauseStart.Hour;
@@ -66,34 +90,65 @@ namespace Stempeluhr
 
             bewZeit -= Pause;
 
-            tb_BewZeit.Text = String.Format("{0:0.00}", bewZeit);
-            PauseDiff = String.Format("{0:0.00}", Pause);
-
-            today = dp_Datum.SelectedDate.Value.Date.ToString("dddd");
-
-            using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
-            {
-                conn.CreateTable<Arbeitstage>();
-
-                query = "Select * from Arbeitstage where Arbeitstag = '" + today + "'";
-
-                if (conn.FindWithQuery<Arbeitstage>(query, "?")?.Checked != null)
-                {
-                    query = "Select Stunden From Arbeitstage Where Arbeitstag = '" + today + "'";
-                    ZeitSOLL = conn.FindWithQuery<Arbeitstage>(query, "?").Stunden;
-                }
-                else
-                {
-                    ZeitSOLL = 0;
-                }
-            }
-
+            //PauseDiff = String.Format("{0:0.00}", Pause);
 
             saldo = bewZeit - ZeitSOLL;
 
-            tb_Saldo.Text = String.Format("{0:0.00}", saldo);
-        }*/
-            
-    }
+            using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
+            {
+                conn.CreateTables<Zeiten, Saldo, Arbeitstage>();
+                query = "Select * From Zeiten where Datum = '" + datum + "'";
 
+                if (conn.FindWithQuery<Zeiten>(query, "?")?.Datum != null)
+                {
+                    update = true;
+                }
+                else
+                {
+                    insert = true;
+                }
+
+                Zeiten zeiten = new Zeiten()
+                {
+                    Datum = datum,
+                    Kommen = Kommen,
+                    PauseStart = PauseStart,
+                    PauseEnde = PauseEnde,
+                    Gehen = Gehen,
+                    ZeitSOLL = ZeitSOLL,
+                    BewZeit = bewZeit,
+                    DiffPause = Pause,
+                    Saldo = saldo,
+                };
+
+                if (conn.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?")?.saldo != null)
+                {
+                    tmpSaldo = conn.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?").saldo;
+                }
+                else
+                {
+                    tmpSaldo = 0;
+                }
+
+                //Tagessaldo zu Gesamtsaldo addieren und in DB sichern
+                Saldo c_saldo = new Saldo
+                {
+                    TimeStmp = DateTime.Now.ToString(),
+                    saldo = tmpSaldo + saldo,
+                };
+
+                conn.Insert(c_saldo);
+
+                //DB updaten oder neuen Zeiteintrag einfügen
+                if (update == true && insert == false)
+                {
+                    conn.Update(zeiten);
+                }
+                else if (update == false && insert == true)
+                {
+                    conn.Insert(zeiten);
+                }
+            }
+        }            
+    }
 }

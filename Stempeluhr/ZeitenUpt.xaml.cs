@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Globalization;
+using Stempeluhr;
 
 namespace Stempeluhr
 {
@@ -181,9 +182,6 @@ namespace Stempeluhr
             tb_BewZeit.Text = "";
             tb_Saldo.Text = "";
 
-            kommen = DateTime.Parse(tb_Kommen.Text, cultureInfo);
-            gehen = DateTime.Parse(tb_Gehen.Text, cultureInfo);
-
             if (tb_PauseStart.Text == "" || tb_PauseEnde.Text == "")
             {
                 tb_PauseStart.Text = "00:00";
@@ -191,8 +189,10 @@ namespace Stempeluhr
                 noPauseTimeSpan = true;
             }
 
-            //Stempeluhr.calcZeiten.Calculate(tb_Kommen.Text, tb_Gehen.Text, tb_PauseStart.Text, tb_PauseEnde.Text, tb_PauseDiff.Text, noPauseTimeSpan);
+            today = dp_Datum.SelectedDate.Value.Date.ToString("dddd");
 
+            kommen = DateTime.Parse(tb_Kommen.Text, cultureInfo);
+            gehen = DateTime.Parse(tb_Gehen.Text, cultureInfo);
             pauseStart = DateTime.Parse(tb_PauseStart.Text, cultureInfo);
             pauseEnde = DateTime.Parse(tb_PauseEnde.Text, cultureInfo);
             
