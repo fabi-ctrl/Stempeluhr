@@ -15,8 +15,6 @@
                 <MenuItem Header="Zeiten nachtragen" Click="but_ZeitenUpt_Click"/>
                 <MenuItem Header="Saldo bearbeiten" Click="but_Saldo_Click" />
                 <Separator />
-                <MenuItem x:Name="m_MiniTimer" Header="Mini-Stempeluhr" IsCheckable="True" IsEnabled="false"/>
-            <Separator />
                 <MenuItem x:Name="m_LoadDB" Header="Sicherung öffnen/erstellen" Click="m_LoadDB_Click" />
                 <MenuItem x:Name="m_Updates" Header="Check for Updates" Click="m_Updates_Click"/>
                 <MenuItem x:Name="m_Info" Header="Info" Click="m_Info_Click"/>
