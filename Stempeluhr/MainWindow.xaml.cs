@@ -21,6 +21,7 @@ namespace Stempeluhr
         string query, strDateVon, strDateBis, _filename, DEBUG;
         static string today = DateTime.Now.ToString("yyyy-MM-dd");
         static string tag = DateTime.Now.ToString("dddd");
+        bool updateReady = false;
         double saldo;
         private Stopwatch stopwatch;
         private Timer timer;
@@ -93,6 +94,14 @@ namespace Stempeluhr
                 manager = await UpdateManager.GitHubUpdateManager(@"https://github.com/fabi-ctrl/Stempeluhr");
 
                 this.Title = "Stempeluhr - " + DateTime.Now.ToString("D") + " (v" + manager.CurrentlyInstalledVersion().ToString() + " - BETA)";
+
+                var update = await manager.CheckForUpdate();
+
+                if (update.ReleasesToApply.Count > 0)
+                {
+                    l_Update.Content = "Es ist ein neues Update verfügbar. Klicke hier um es zu installieren.";
+                    updateReady = true;
+                }
             }
             catch(Exception ex)
             {
@@ -417,6 +426,29 @@ namespace Stempeluhr
             
         }
 
+        private async void l_Update_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            try
+            {
+                var updateInfo = await manager.CheckForUpdate();
+
+                if (updateInfo.ReleasesToApply.Count > 0)
+                {
+                    await manager.UpdateApp();
+
+                    MessageBox.Show("Updated succesfuly!");
+                }
+                else
+                {
+                    MessageBox.Show("Du hast bereits die aktuelle Version installiert.");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ups... es ist ein Fehler aufgetreten. " + ex.Message.ToString());
+            }
+        }
+
         private void tbFileName_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             string path = System.IO.Path.GetDirectoryName(App.databasePath);
@@ -439,8 +471,8 @@ namespace Stempeluhr
 
         private void ZeitBerechnen()
         {
-            //try
-            //{
+            try
+            {
                 //string today = DateTime.Now.ToString("yyyy-MM-dd");
                 string Kommen, Gehen, PauseStart, PauseEnde;
                 DateTime Datum = DateTime.Now;
@@ -465,7 +497,7 @@ namespace Stempeluhr
                     }
                 }
 
-                Stempeluhr.calcZeiten.Calculate(Datum, Kommen, Gehen, PauseStart, PauseEnde, "", false);
+                Stempeluhr.calcZeiten.Calculate(Datum, Kommen, Gehen, PauseStart, PauseEnde, "", true);
 
                 ReadDatabase();
 
@@ -480,11 +512,11 @@ namespace Stempeluhr
 
                 tbTimer.Text = "Bew. Zeit: " + String.Format("{0:0.00}", bewzeit) + " | Saldo heute: '" + String.Format("{0:0.00}", saldo) + "'";
                 Saldo = String.Format("{0:0.00}", saldo);
-            //}
-            //catch (Exception ex)
-            //{
-            //    MessageBox.Show("Ups... etwas ist schief gelaufen: '" + ex.Message.ToString() + "'", "Fehler beim Berechnen");
-            //}
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ups... etwas ist schief gelaufen: '" + ex.Message.ToString() + "'", "Fehler beim Berechnen");
+            }
         }
 
         /*private void ZeitBerechnen()

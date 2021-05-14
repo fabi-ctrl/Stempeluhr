@@ -16,7 +16,7 @@ namespace Stempeluhr
             
             bool update = false, insert = false;
             
-            string tag = Datum.DayOfWeek.ToString();
+            string tag = Datum.Date.ToString("dddd");
             string datum = Datum.Date.ToString("yyyy-MM-dd");
             
             today = DateTime.Now.ToString("dddd");
@@ -31,7 +31,10 @@ namespace Stempeluhr
             {
                 pauseStart = DateTime.Parse(PauseStart, cultureInfo);
                 pauseEnde = DateTime.Parse(PauseEnde, cultureInfo);
-            }            
+            }
+
+            kommen = DateTime.Parse(Kommen, cultureInfo);
+            gehen = DateTime.Parse(Gehen, cultureInfo);
 
             double kommenHours = gehen.Hour - kommen.Hour;
             double kommenMinutes = gehen.Minute - kommen.Minute;

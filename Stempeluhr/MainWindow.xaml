@@ -26,13 +26,18 @@
         <!--Anzeige des aktuellen Datums-->
         <StackPanel Margin="5 0 5 0">
             <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                
-                <TextBlock Name="tbHeute" Grid.Column="0" Margin="0 5 0 5" FontWeight="Bold" Height="30"/>
-                <TextBlock x:Name="tbFileName" Grid.Column="1" Margin="0 5 0 5" FontWeight="Bold" Height="30" AutomationProperties.HelpText="Klicke um DB im Explorer zu öffnen" MouseLeftButtonUp="tbFileName_MouseLeftButtonUp" Cursor="Hand" ToolTip="Klicke, um deine DB im Explorer zu öffnen"/>
+
+                <Label x:Name="l_Update" Grid.Row="0" HorizontalAlignment="Center" Grid.ColumnSpan="2" MouseLeftButtonUp="l_Update_MouseLeftButtonUp"/>
+                <TextBlock Name="tbHeute" Grid.Row="1" Grid.Column="0" Margin="0 5 0 5" FontWeight="Bold" Height="30"/>
+                <TextBlock x:Name="tbFileName" Grid.Row="1" Grid.Column="1" Margin="0 5 0 5" FontWeight="Bold" Height="30" AutomationProperties.HelpText="Klicke um DB im Explorer zu öffnen" MouseLeftButtonUp="tbFileName_MouseLeftButtonUp" Cursor="Hand" ToolTip="Klicke, um deine DB im Explorer zu öffnen"/>
             </Grid>
 
         </StackPanel>

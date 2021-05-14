@@ -18,8 +18,6 @@ namespace Stempeluhr
         CultureInfo cultureInfo;
         DateTime kommen, pauseStart, pauseEnde, gehen;
 
-       
-
         public ZeitenUpt()
         {
             today = DateTime.Now.ToString("dddd");
@@ -112,6 +110,19 @@ namespace Stempeluhr
             MessageBox.Show("Daten wurden gesichert!", "Daten gesichert!", MessageBoxButton.OK);
             LoadTimes();
             ResetValues();
+        }
+
+        private void butCalc_Click(object sender, RoutedEventArgs e)
+        {
+            if (tb_Kommen.Text == "" || tb_Gehen.Text == "")
+            {
+                MessageBox.Show("Bitte gib mindestens eine Kommen und eine Gehen Zeit ein.", "Zeiten eintragen", MessageBoxButton.OK);
+            }
+            else
+            {
+                Calculate();
+                butSave.IsEnabled = true;
+            }
         }
 
         private void dp_Datum_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
