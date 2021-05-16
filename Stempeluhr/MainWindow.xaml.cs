@@ -21,7 +21,7 @@ namespace Stempeluhr
         string query, strDateVon, strDateBis, _filename, DEBUG;
         static string today = DateTime.Now.ToString("yyyy-MM-dd");
         static string tag = DateTime.Now.ToString("dddd");
-        bool updateReady = false;
+        bool updateReady = false, pauseStarted = false;
         double saldo;
         private Stopwatch stopwatch;
         private Timer timer;
@@ -34,7 +34,6 @@ namespace Stempeluhr
             {
                 DataContext = this;
                 InitializeComponent();
-                
                 Loaded += MainWindow_Loaded;
 
                 tbTimer.Text = startTimeDisplay;
@@ -51,6 +50,8 @@ namespace Stempeluhr
                 zeiten = new List<Zeiten>();
 
                 tbHeute.Text = DateTime.Now.ToString("D");
+
+                this.Show();
 
                 LoadConfig();
 
@@ -99,7 +100,7 @@ namespace Stempeluhr
 
                 if (update.ReleasesToApply.Count > 0)
                 {
-                    l_Update.Content = "Es ist ein neues Update verfügbar. Klicke hier um es zu installieren.";
+                    l_Update.Content = "Es ist ein neues Update verfügbar. Klicke hier um es zu installieren.";                    
                     updateReady = true;
                 }
             }
@@ -135,14 +136,28 @@ namespace Stempeluhr
 
         private async void ReturnSaldo()
         {
-            using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
+            try
             {
-                saldo = conn.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?").saldo;
-                Saldo = String.Format("{0:0.00}", saldo);
+                using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
+                {
+                    conn.CreateTable<Saldo>();
+                    if (conn.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?")?.saldo != null)
+                    {
+                        saldo = conn.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?").saldo;
+                    }
+                    else
+                    {
+                        saldo = 0;
+                    }
+                    Saldo = String.Format("{0:0.00}", saldo);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ups... etwas ist schief gelaufen. Der Saldo konnte nicht geladen werden. (" + ex.Message.ToString() + ")", "Fehler");
             }
         }
 
-        
         private async void OnTimerElapse(object sender, ElapsedEventArgs e)
         {
             Application.Current.Dispatcher.Invoke(() => tbTimer.Text = stopwatch.Elapsed.ToString(format:@"hh\:mm\:ss"));
@@ -276,7 +291,15 @@ namespace Stempeluhr
 
         private void butPauseStart_Click(object sender, RoutedEventArgs e)
         {
+            
             UpdateTable("PauseStart");
+
+            //Prüfen ob Pausezeiten addiert werden sollen, wenn ja dann werden die Pausenzeiten in der Tabelle Pausen gelogged
+            Configuration _config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            if (_config.AppSettings.Settings["TypeOfBreak"].Value == "1")
+            {
+                AddPause();
+            }
 
             butKommen.IsEnabled = false;
             butPauseEnde.IsEnabled = true;   
@@ -369,6 +392,49 @@ namespace Stempeluhr
             LoadToDataGrid("select * from Zeiten ORDER BY Datum DESC");
         }
 
+
+        //Wenn Pausenzeiten addiert werden sollen, fügt diese Funktion der Tabelle Pausen eine neue Zeile hinzu
+        private void AddPause()
+        {   
+            using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
+            {
+                conn.CreateTable<Pausen>();
+
+
+                query = "SELECT Datum FROM Saldo ORDER BY Start_Time DESC LIMIT 1";
+
+                
+                    if (conn.FindWithQuery<Pausen>(query, "?")?.Ende_Time == null)
+                    {
+                        EndPause();
+                    }
+                    else
+                    {
+                        Pausen pausen = new Pausen()
+                        {
+                            Datum = today,
+                            Start_Time = DateTime.Now.ToString("HH:mm"),
+                        };
+
+                        conn.Insert(pausen);
+                    }               
+            }
+        }
+
+        private void EndPause()
+        { 
+            using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
+            {
+                conn.CreateTable<Pausen>();
+
+                if (conn.FindWithQuery<Pausen>("SELECT * FROM Pausen WHERE Datum = '" + today + "'")?.Datum != null)
+                {
+                    query = "UPDATE Pausen SET Ende_Time = '" + DateTime.Now.ToString("HH:mm") + "' WHERE Datum = '" + today + "'";
+                    conn.Query<Pausen>(query, "?");
+                }
+            }
+        }
+
         void LoadToDataGrid(string sqliteQuery)
         {
             using (SQLiteConnection connection = new SQLiteConnection(App.databasePath))
@@ -426,6 +492,12 @@ namespace Stempeluhr
             
         }
 
+        private void m_Settings_Click(object sender, RoutedEventArgs e)
+        {
+            Settings settings = new Settings();
+            settings.ShowDialog();
+        }
+
         private async void l_Update_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             try
@@ -445,7 +517,7 @@ namespace Stempeluhr
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ups... es ist ein Fehler aufgetreten. " + ex.Message.ToString());
+                MessageBox.Show("Ups... es ist ein Fehler beim updaten der App aufgetreten. (" + ex.Message.ToString() + ")", "Fehler beim Update");
             }
         }
 
@@ -467,7 +539,6 @@ namespace Stempeluhr
             Abwesenheit winFehltage = new Abwesenheit();
             winFehltage.ShowDialog();
         }
-
 
         private void ZeitBerechnen()
         {

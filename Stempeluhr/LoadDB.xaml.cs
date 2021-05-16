@@ -36,8 +36,8 @@ namespace Stempeluhr
 
             Configuration _config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
             _config.AppSettings.Settings["DBPath"].Value = sfd.FileName;
-            ConfigurationManager.RefreshSection("appSettings");
             _config.Save(ConfigurationSaveMode.Modified);
+            ConfigurationManager.RefreshSection("appSettings");
 
             MessageBox.Show("Deine Zeiten DB liegt hier: " + ConfigurationManager.AppSettings.Get("DBPath"));
             this.Close();
@@ -59,8 +59,8 @@ namespace Stempeluhr
 
             Configuration _config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
             _config.AppSettings.Settings["DBPath"].Value = ofd.FileName;
+            _config.Save(ConfigurationSaveMode.Modified);
             ConfigurationManager.RefreshSection("appSettings");
-             _config.Save(ConfigurationSaveMode.Modified);
 
             MessageBox.Show("Deine Zeiten DB wurde geladen");
             this.Close();
