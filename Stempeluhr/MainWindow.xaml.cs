@@ -18,6 +18,7 @@ namespace Stempeluhr
     public partial class MainWindow : INotifyPropertyChanged
     {
         List<Zeiten> zeiten;
+        List<Pausen> pausenToday;
         string query, strDateVon, strDateBis, _filename, DEBUG;
         static string today = DateTime.Now.ToString("yyyy-MM-dd");
         static string tag = DateTime.Now.ToString("dddd");
@@ -291,24 +292,39 @@ namespace Stempeluhr
 
         private void butPauseStart_Click(object sender, RoutedEventArgs e)
         {
-            
-            UpdateTable("PauseStart");
-
             //Prüfen ob Pausezeiten addiert werden sollen, wenn ja dann werden die Pausenzeiten in der Tabelle Pausen gelogged
             Configuration _config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
             if (_config.AppSettings.Settings["TypeOfBreak"].Value == "1")
             {
                 AddPause();
             }
+            else
+            {
+                UpdateTable("PauseStart");
+            }
 
             butKommen.IsEnabled = false;
-            butPauseEnde.IsEnabled = true;   
+            butPauseStart.IsEnabled = false;
+            butPauseEnde.IsEnabled = true;
+            butGehen.IsEnabled = false;
         }
 
         private void butPauseEnde_Click(object sender, RoutedEventArgs e)
         {
-            UpdateTable("PauseEnde");
+            //Prüfen ob Pausezeiten addiert werden sollen, wenn ja dann werden die Pausenzeiten in der Tabelle Pausen gelogged
+            Configuration _config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            if (_config.AppSettings.Settings["TypeOfBreak"].Value == "1")
+            {
+                EndPause();
+            }
+            else
+            {
+                UpdateTable("PauseEnde");
+            }
+
+            butPauseStart.IsEnabled = true;
             butPauseEnde.IsEnabled = false;
+            butGehen.IsEnabled = true;
         }
 
         private void butGehen_Click(object sender, RoutedEventArgs e)
@@ -400,24 +416,15 @@ namespace Stempeluhr
             {
                 conn.CreateTable<Pausen>();
 
+                Pausen pausen = new Pausen()
+                {
+                    Datum = today,
+                    Start_Time = DateTime.Now.ToString("HH:mm"),
+                };
 
-                query = "SELECT Datum FROM Saldo ORDER BY Start_Time DESC LIMIT 1";
+                conn.Insert(pausen);
 
-                
-                    if (conn.FindWithQuery<Pausen>(query, "?")?.Ende_Time == null)
-                    {
-                        EndPause();
-                    }
-                    else
-                    {
-                        Pausen pausen = new Pausen()
-                        {
-                            Datum = today,
-                            Start_Time = DateTime.Now.ToString("HH:mm"),
-                        };
-
-                        conn.Insert(pausen);
-                    }               
+                LoadToPausen("SELECT Datum, Start_Time, Ende_Time, Pausendauer FROM Pausen WHERE Datum = '" + today + "' ORDER BY Start_Time DESC");
             }
         }
 
@@ -426,11 +433,35 @@ namespace Stempeluhr
             using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
             {
                 conn.CreateTable<Pausen>();
+                
+                query = "SELECT ID FROM Pausen ORDER BY ID DESC LIMIT 1";
+
+                int id = conn.FindWithQuery<Pausen>(query, "?").ID;
 
                 if (conn.FindWithQuery<Pausen>("SELECT * FROM Pausen WHERE Datum = '" + today + "'")?.Datum != null)
                 {
-                    query = "UPDATE Pausen SET Ende_Time = '" + DateTime.Now.ToString("HH:mm") + "' WHERE Datum = '" + today + "'";
+                    query = "UPDATE Pausen SET Ende_Time = '" + DateTime.Now.ToString("HH:mm") + "' WHERE ID = '" + id + "'";
                     conn.Query<Pausen>(query, "?");
+
+                    query = "UPDATE Pausen SET Pausendauer = round(((strftime('%s', Ende_Time) - strftime('%s', Start_Time))) / 3600.0, 2) WHERE ID = '" + id + "'";
+                    conn.Query<Pausen>(query, "?");
+                }
+
+                LoadToPausen("SELECT Datum, Start_Time, Ende_Time, Pausendauer FROM Pausen WHERE Datum = '" + today + "' ORDER BY Start_Time DESC");
+            }
+        }
+
+        private void LoadToPausen(string sqliteQuery)
+        {
+            pausenToday = new List<Pausen>();
+
+            using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
+            {
+                pausenToday = (conn.Query<Pausen>(sqliteQuery, "?").ToList()).OrderBy(c => c.Start_Time).ToList();
+
+                if (pausenToday != null)
+                {
+                    dg_Pausen.ItemsSource = pausenToday;
                 }
             }
         }
@@ -551,7 +582,7 @@ namespace Stempeluhr
 
                 using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
                 {
-                    conn.CreateTable<Zeiten>();
+                    conn.CreateTables<Zeiten, Pausen>();
                     query = "SELECT * FROM Zeiten WHERE Datum = '" + today + "'";
                     Kommen = conn.FindWithQuery<Zeiten>(query, "?").Kommen;
                     Gehen = conn.FindWithQuery<Zeiten>(query, "?").Gehen;
@@ -568,7 +599,7 @@ namespace Stempeluhr
                     }
                 }
 
-                Stempeluhr.calcZeiten.Calculate(Datum, Kommen, Gehen, PauseStart, PauseEnde, "", true);
+                Stempeluhr.calcZeiten.Calculate(Datum, Kommen, Gehen, PauseStart, PauseEnde, 0);
 
                 ReadDatabase();
 

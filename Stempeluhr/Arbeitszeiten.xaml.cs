@@ -73,13 +73,19 @@ namespace Stempeluhr
                         tbStunden.Name = "tbStunden_" + tag;
                         tbPause.Name = "tbPause_" + tag;
 
-                        //Arbeitsstunden auslesne
+                        //Arbeitsstunden auslesen
                         foreach (TextBox tb in FindVisualChildren<TextBox>(spArbeitsstunden))
                         {
                             if (tb.Name == tbStunden.Name)
                             {
-                                stunden = Double.Parse(tb.Text);
-
+                                if (tb.Text != "")
+                                {
+                                    stunden = Double.Parse(tb.Text);
+                                }
+                                else
+                                {
+                                    stunden = 0;
+                                }
                             }
                         }
 
@@ -88,7 +94,14 @@ namespace Stempeluhr
                         {
                             if (tb.Name == tbPause.Name)
                             {
-                                pause = Double.Parse(tb.Text);
+                                if (tb.Text != "")
+                                {
+                                    pause = Double.Parse(tb.Text);
+                                }
+                                else
+                                {
+                                    pause = 0;
+                                }
                             }
                         }
 

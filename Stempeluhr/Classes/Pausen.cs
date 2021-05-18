@@ -9,6 +9,6 @@ namespace Stempeluhr
         public string Datum { get; set; }
         public string Start_Time { get; set; }
         public string Ende_Time { get; set; }
-        public string Pausendauer { get; set; }
+        public double Pausendauer { get; set; }
     }
 }

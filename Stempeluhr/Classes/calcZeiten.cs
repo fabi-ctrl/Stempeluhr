@@ -1,5 +1,6 @@
 ﻿using SQLite;
 using System;
+using System.Configuration;
 using System.Globalization;
 using System.Windows;
 
@@ -7,12 +8,13 @@ namespace Stempeluhr
 {
     class calcZeiten
     {
-        public static void Calculate(DateTime Datum, string Kommen, string Gehen, string PauseStart, string PauseEnde, string PauseDiff, bool noPauseTimeSpan)
+        public static void Calculate(DateTime Datum, string Kommen, string Gehen, string PauseStart, string PauseEnde, double PauseDiff)
         {   
             string query, today;
             double pauseSOLL, saldo, ZeitSOLL, tmpSaldo, Pause;
             CultureInfo cultureInfo;
             DateTime kommen, pauseStart, pauseEnde, gehen;
+            bool PauseTimeSpan = false;
             
             bool update = false, insert = false;
             
@@ -31,6 +33,28 @@ namespace Stempeluhr
             {
                 pauseStart = DateTime.Parse(PauseStart, cultureInfo);
                 pauseEnde = DateTime.Parse(PauseEnde, cultureInfo);
+                PauseTimeSpan = true;
+            }
+            else
+            {
+                Configuration _config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                if (_config.AppSettings.Settings["TypeOfBreak"].Value == "1")
+                {
+                    using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
+                    {
+                        query = "SELECT ID FROM Pausen WHERE Datum = '" + datum + "' ORDER BY ID ASC LIMIT 1";
+                        int id = conn.FindWithQuery<Pausen>(query, "?").ID;
+                        query = "SELECT ID FROM Pausen WHERE Datum = '" + datum + "' ORDER BY ID DESC LIMIT 1";
+                        int id_max = conn.FindWithQuery<Pausen>(query, "?").ID;
+
+                        while (id <= id_max)
+                        {
+                            query = "SELECT Pausendauer FROM Pausen WHERE ID = '" + id + "'";
+                            PauseDiff += conn.FindWithQuery<Pausen>(query, "?").Pausendauer;
+                            id++;
+                        }
+                    }
+                }
             }
 
             kommen = DateTime.Parse(Kommen, cultureInfo);
@@ -59,7 +83,7 @@ namespace Stempeluhr
             }
 
             //beim Aufruf aus MaindWindow Gehen, immer false
-            if (noPauseTimeSpan == false)
+            if (PauseTimeSpan)
             {
                 double pauseHours = pauseEnde.Hour - pauseStart.Hour;
                 double pauseMinutes = pauseEnde.Minute - pauseStart.Minute;
@@ -72,15 +96,15 @@ namespace Stempeluhr
             }
             else
             {
-                if (PauseDiff != "")
+                if (PauseDiff != 0)
                 {
-                    if (Convert.ToDouble(PauseDiff) < pauseSOLL)
+                    if (PauseDiff < pauseSOLL)
                     {
                         Pause = pauseSOLL;
                     }
                     else
                     {
-                        Pause = Convert.ToDouble(PauseDiff);
+                        Pause = PauseDiff;
                     }
                 }
                 else
