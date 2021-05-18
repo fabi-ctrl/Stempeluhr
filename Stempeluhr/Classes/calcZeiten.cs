@@ -121,6 +121,8 @@ namespace Stempeluhr
 
             saldo = bewZeit - ZeitSOLL;
 
+            
+
             using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
             {
                 conn.CreateTables<Zeiten, Saldo, Arbeitstage>();
@@ -143,9 +145,9 @@ namespace Stempeluhr
                     PauseEnde = PauseEnde,
                     Gehen = Gehen,
                     ZeitSOLL = ZeitSOLL,
-                    BewZeit = bewZeit,
+                    BewZeit = Math.Round(bewZeit, 2),
                     DiffPause = Pause,
-                    Saldo = saldo,
+                    Saldo = Math.Round(saldo, 2),
                 };
 
                 if (conn.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?")?.saldo != null)
