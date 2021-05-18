@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Stempeluhr"
         mc:Ignorable="d"
-        Title="Stempeluhr" Height="550" Width="900" WindowStartupLocation="CenterScreen" Icon="assets\schedule.ico">
+        Title="Stempeluhr" Height="600" Width="900" WindowStartupLocation="CenterScreen" Icon="assets\schedule.ico">
 
     <StackPanel>
         <Menu HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
@@ -132,9 +132,10 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <StackPanel Margin="5 5 5 2" Grid.Column="0">
+                <Label>Zeiten</Label>
                 <DataGrid Name="dgZeiten" AutoGenerateColumns="False" MaxWidth="600" MaxHeight="200" HorizontalAlignment="Left"  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Datum" Binding="{Binding Datum}" Width="SizeToCells"/>
+                        <DataGridTextColumn Header="Datum" Binding="{Binding Datum}" Width="Auto"/>
                         <DataGridTextColumn Header="Kommen" Binding="{Binding Kommen}" Width="60"/>
                         <DataGridTextColumn Header="Pause Start" Binding="{Binding PauseStart}" Width="80"/>
                         <DataGridTextColumn Header="Pause Ende" Binding="{Binding PauseEnde}" Width="80"/>
@@ -142,18 +143,18 @@
                         <DataGridTextColumn Header="Zeit SOLL" Binding="{Binding ZeitSOLL}" Width="60"/>
                         <DataGridTextColumn Header="Dauer Pause" Binding="{Binding DiffPause}" Width="60"/>
                         <DataGridTextColumn Header="Bew. Zeit" Binding="{Binding BewZeit}" Width="60"/>
-                        <DataGridTextColumn Header="Saldo" Binding="{Binding Saldo}" Width="100"/>
+                        <DataGridTextColumn Header="Saldo" Binding="{Binding Saldo}" Width="Auto"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </StackPanel>
-            <StackPanel Grid.Column="1">
+            <StackPanel Margin="5 5 5 2" Grid.Column="1">
                 <Label>Pausen heute:</Label>
                 <DataGrid x:Name="dg_Pausen" AutoGenerateColumns="False" MaxWidth="600" MaxHeight="200" HorizontalAlignment="Left"  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Datum" Binding="{Binding Datum}" Width="Auto"/>
                         <DataGridTextColumn Header="Pausen Beginn" Binding="{Binding Start_Time}" Width="Auto"/>
                         <DataGridTextColumn Header="Pausen Ende" Binding="{Binding Ende_Time}" Width="Auto"/>
-                        <DataGridTextColumn Header="Pausedauer" Binding="{Binding Pausendauer}" Width="Auto"/>
+                        <DataGridTextColumn Header="Pausendauer" Binding="{Binding Pausendauer}" Width="Auto"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </StackPanel>
