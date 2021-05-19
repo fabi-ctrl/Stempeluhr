@@ -5,6 +5,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Globalization;
 using Stempeluhr;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Stempeluhr
 {
@@ -17,6 +19,7 @@ namespace Stempeluhr
         private double pause, saldo, stunden;
         CultureInfo cultureInfo;
         DateTime kommen, pauseStart, pauseEnde, gehen;
+        List<Pausen> pausen = new List<Pausen>();
 
         public ZeitenUpt()
         {
@@ -38,78 +41,85 @@ namespace Stempeluhr
             string datum = dp_Datum.SelectedDate.Value.Date.ToString("yyyy-MM-dd");
             double tmpSaldo;
 
-            using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
+            if (tb_Kommen.Text == "" || tb_Gehen.Text == "")
             {
-                conn.CreateTables<Zeiten, Saldo>();
-                query = "Select * From Zeiten where Datum = '" + datum + "'";
-
-                if(conn.FindWithQuery<Zeiten>(query, "?")?.Datum != null)
+                MessageBox.Show("Bitte gib mindestens eine Kommen und eine Gehen Zeit ein.", "Zeiten eintragen", MessageBoxButton.OK);
+            }
+            else
+            {
+                using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
                 {
-                    MessageBoxResult result = MessageBox.Show(
-                        "Es besteht bereits ein Eintrag für dieses Datum. Zeit überschreiben?", "Eintrag bereits vorhanden!", MessageBoxButton.YesNoCancel
-                        );
+                    conn.CreateTables<Zeiten, Saldo>();
+                    query = "Select * From Zeiten where Datum = '" + datum + "'";
 
-                    if (result == MessageBoxResult.Yes)
+                    if (conn.FindWithQuery<Zeiten>(query, "?")?.Datum != null)
                     {
-                        update = true;
+                        MessageBoxResult result = MessageBox.Show(
+                            "Es besteht bereits ein Eintrag für dieses Datum. Zeit überschreiben?", "Eintrag bereits vorhanden!", MessageBoxButton.YesNoCancel
+                            );
+
+                        if (result == MessageBoxResult.Yes)
+                        {
+                            update = true;
+                        }
+                        else
+                        {
+                            return;
+                        }
                     }
                     else
-                    {   
-                        return;
+                    {
+                        insert = true;
+                    }
+
+                    Zeiten zeiten = new Zeiten()
+                    {
+                        Datum = datum,
+                        Kommen = tb_Kommen.Text,
+                        PauseStart = tb_PauseStart.Text,
+                        PauseEnde = tb_PauseEnde.Text,
+                        Gehen = tb_Gehen.Text,
+                        ZeitSOLL = Convert.ToDouble(tb_ZeitSOLL.Text),
+                        BewZeit = Convert.ToDouble(tb_BewZeit.Text),
+                        DiffPause = Convert.ToDouble(tb_PauseDiff.Text),
+                        Saldo = Convert.ToDouble(tb_Saldo.Text),
+                    };
+
+
+                    if (conn.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?")?.saldo != null)
+                    {
+                        tmpSaldo = conn.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?").saldo;
+                    }
+                    else
+                    {
+                        tmpSaldo = 0;
+                    }
+
+                    Saldo c_saldo = new Saldo
+                    {
+                        TimeStmp = DateTime.Now.ToString(),
+                        saldo = tmpSaldo + saldo,
+                    };
+
+                    conn.Insert(c_saldo);
+
+                    //DB updaten oder neuen Zeiteintrag einfügen
+                    if (update == true && insert == false)
+                    {
+                        conn.Update(zeiten);
+
+                        //query = "UPDATE Zeiten SET Kommen = '" + tb_Kommen.Text + "' Where Datum = '" + datum + "'";
+                    }
+                    else if (update == false && insert == true)
+                    {
+                        conn.Insert(zeiten);
                     }
                 }
-                else
-                {
-                    insert = true;
-                }
 
-                Zeiten zeiten = new Zeiten()
-                {
-                    Datum = datum,
-                    Kommen = tb_Kommen.Text,
-                    PauseStart = tb_PauseStart.Text,
-                    PauseEnde = tb_PauseEnde.Text,
-                    Gehen = tb_Gehen.Text,
-                    ZeitSOLL = Convert.ToDouble(tb_ZeitSOLL.Text),
-                    BewZeit = Convert.ToDouble(tb_BewZeit.Text),
-                    DiffPause = Convert.ToDouble(tb_PauseDiff.Text),
-                    Saldo = Convert.ToDouble(tb_Saldo.Text),
-                };
-
-
-                if (conn.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?")?.saldo != null)
-                {
-                    tmpSaldo = conn.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?").saldo;
-                }
-                else
-                {
-                    tmpSaldo = 0;
-                }
-
-                Saldo c_saldo = new Saldo
-                {
-                    TimeStmp = DateTime.Now.ToString(),
-                    saldo = tmpSaldo + saldo,
-                };
-
-                conn.Insert(c_saldo);
-
-                //DB updaten oder neuen Zeiteintrag einfügen
-                if (update == true && insert == false)
-                {
-                    conn.Update(zeiten);
-
-                    //query = "UPDATE Zeiten SET Kommen = '" + tb_Kommen.Text + "' Where Datum = '" + datum + "'";
-                }
-                else if (update == false && insert == true)
-                {
-                    conn.Insert(zeiten);
-                }
+                MessageBox.Show("Daten wurden gesichert!", "Daten gesichert!", MessageBoxButton.OK);
+                ResetValues();
+                LoadTimes();
             }
-
-            MessageBox.Show("Daten wurden gesichert!", "Daten gesichert!", MessageBoxButton.OK);
-            LoadTimes();
-            ResetValues();
         }
 
         private void butCalc_Click(object sender, RoutedEventArgs e)
@@ -135,7 +145,36 @@ namespace Stempeluhr
             today = dp_Datum.SelectedDate.Value.Date.ToString("dddd");
             using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
             {
-                conn.CreateTables<Zeiten, Arbeitstage, Saldo>();
+                conn.CreateTables<Zeiten, Arbeitstage, Saldo, Pausen>();
+
+                query = "SELECT * FROM Zeiten WHERE Datum = '" + dp_Datum.SelectedDate.Value.Date.ToString("yyyy-MM-dd") + "'";
+
+                if (conn.FindWithQuery<Zeiten>(query, "?")?.Datum != null)
+                {
+                    tb_Kommen.Text = 
+                        conn.FindWithQuery<Zeiten>("SELECT Kommen FROM Zeiten WHERE Datum = '" + dp_Datum.SelectedDate.Value.Date.ToString("yyyy-MM-dd") + "'", "?").Kommen;
+                    tb_PauseStart.Text = 
+                        conn.FindWithQuery<Zeiten>("SELECT PauseStart FROM Zeiten WHERE Datum = '" + dp_Datum.SelectedDate.Value.Date.ToString("yyyy-MM-dd") + "'", "?").PauseStart;
+                    tb_PauseEnde.Text = 
+                        conn.FindWithQuery<Zeiten>("SELECT PauseEnde FROM Zeiten WHERE Datum = '" + dp_Datum.SelectedDate.Value.Date.ToString("yyyy-MM-dd") + "'", "?").PauseEnde;
+                    tb_Gehen.Text = 
+                        conn.FindWithQuery<Zeiten>("SELECT Gehen FROM Zeiten WHERE Datum = '" + dp_Datum.SelectedDate.Value.Date.ToString("yyyy-MM-dd") + "'", "?").Gehen;
+                    tb_PauseDiff.Text =
+                        String.Format("{0:0.00}", conn.FindWithQuery<Zeiten>("SELECT DiffPause FROM Zeiten WHERE Datum = '" + dp_Datum.SelectedDate.Value.Date.ToString("yyyy-MM-dd") + "'", "?").DiffPause);
+                    tb_BewZeit.Text =
+                        String.Format("{0:0.00}", conn.FindWithQuery<Zeiten>("SELECT BewZeit FROM Zeiten WHERE Datum = '" + dp_Datum.SelectedDate.Value.Date.ToString("yyyy-MM-dd") + "'", "?").BewZeit);
+                    tb_Saldo.Text =
+                        String.Format("{0:0.00}", conn.FindWithQuery<Zeiten>("SELECT Saldo FROM Zeiten WHERE Datum = '" + dp_Datum.SelectedDate.Value.Date.ToString("yyyy-MM-dd") + "'", "?").Saldo);
+
+                    butSave.IsEnabled = true;
+
+                    query = "SELECT * FROM Pausen WHERE Datum = '" + dp_Datum.SelectedDate.Value.Date.ToString("yyyy-MM-dd") + "'";
+
+                    if (conn.FindWithQuery<Pausen>(query, "?")?.Datum != null)
+                    {
+                        LoadPausen(query);
+                    }
+                }
 
                 query = "Select * from Arbeitstage where Arbeitstag = '" + today + "'";
 
@@ -156,9 +195,7 @@ namespace Stempeluhr
                 tb_ZeitSOLL.Text = String.Format("{0:0.00}", stunden);
 
                 tb_GesamtSaldo.Text = String.Format("{0:0.00}", conn.FindWithQuery<Saldo>("SELECT saldo FROM Saldo ORDER BY ID DESC LIMIT 1", "?")?.saldo);
-
             }
-
         }
 
         private void butReset_Click(object sender, RoutedEventArgs e)
@@ -265,12 +302,23 @@ namespace Stempeluhr
                     ZeitSOLL = 0;
                 }
             }
-
-
             saldo = bewZeit - ZeitSOLL;
 
             tb_Saldo.Text = String.Format("{0:0.00}", saldo);
         }
 
+        private void LoadPausen(string sqliteQuery)
+        {
+            using (SQLiteConnection conn = new SQLiteConnection(App.databasePath))
+            {
+                conn.CreateTable<Pausen>();
+                pausen = conn.Query<Pausen>(sqliteQuery, "?").ToList();
+
+                if (pausen != null)
+                {
+                    dg_Pausen.ItemsSource = pausen;
+                }
+            }
+        }
     }
 }
